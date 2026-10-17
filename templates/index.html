@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Campus Resource & Space Booking Portal</title>
+  <meta name="description" content="Campus Resource Scheduling, Multi-Role Governance, and Automated Interval Conflict Detection Portal.">
+  
+  <!-- Modern Professional Typography from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Application Styles -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header class="app-header" id="appHeader">
+    <div class="header-container">
+      <div class="brand-area">
+        <div class="brand-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 21h18"></path>
+            <path d="M5 21V7l8-4v18"></path>
+            <path d="M19 21V11l-6-4"></path>
+            <path d="M9 9h1"></path>
+            <path d="M9 13h1"></path>
+            <path d="M9 17h1"></path>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1 class="brand-title">Smart Campus <span class="accent-text">Resource Booking</span></h1>
+          <div class="brand-badges">
+            <span class="pulse-indicator"><span class="dot"></span> System Live & Synced</span>
+            <span class="tech-badge">Campus Operations Portal</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Strip -->
+      <div class="header-metrics" id="headerMetrics">
+        <div class="metric-pill" title="Total campus facilities registered">
+          <span class="metric-num" id="statTotalResources">8</span>
+          <span class="metric-lbl">Venues</span>
+        </div>
+        <div class="metric-pill" title="Active approved sessions today">
+          <span class="metric-num text-emerald" id="statTodayActive">2</span>
+          <span class="metric-lbl">Active Today</span>
+        </div>
+        <div class="metric-pill alert-pill" id="statPendingContainer" title="Pending administrative reviews">
+          <span class="metric-num text-warning" id="statPending">1</span>
+          <span class="metric-lbl">Pending Review</span>
+        </div>
+      </div>
+
+      <!-- Persona Switcher & Fast Actions -->
+      <div class="header-controls">
+        <div class="persona-selector-box">
+          <label for="personaSelect" class="control-label">User Persona:</label>
+          <div class="select-wrapper">
+            <select id="personaSelect" class="persona-select">
+              <option value="Alex Rivera|Student">👤 Alex Rivera (Student)</option>
+              <option value="Dr. Elena Vance|Professor">🎓 Dr. Elena Vance (Professor)</option>
+              <option value="Marcus Chen|Lab Assistant">🔬 Marcus Chen (Lab Assistant)</option>
+              <option value="Sarah Jenkins|Campus Manager">🛡️ Sarah Jenkins (Campus Manager)</option>
+            </select>
+          </div>
+        </div>
+
+        <button id="btnQuickConflictDemo" class="btn btn-warning-soft" title="Simulates a colliding reservation to test interval conflict blocking">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          Conflict Simulation
+        </button>
+
+        <button id="btnResetDemoData" class="btn btn-ghost" title="Reset sample data to initial state">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"></polyline><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+          Reset Data
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="tab-nav" aria-label="Main Navigation">
+      <div class="tab-container">
+        <button class="tab-link active" data-tab="tab-catalog" id="navCatalog">
+          <span class="tab-icon">🏛️</span> Facility Catalog
+        </button>
+        <button class="tab-link" data-tab="tab-booking" id="navBooking">
+          <span class="tab-icon">⚡</span> Reserve Space & Conflict Engine
+        </button>
+        <button class="tab-link" data-tab="tab-passbook" id="navPassbook">
+          <span class="tab-icon">📋</span> Reservation Passbook
+        </button>
+        <button class="tab-link" data-tab="tab-admin" id="navAdmin">
+          <span class="tab-icon">🛡️</span> Admin Approvals Console
+          <span class="badge-counter" id="adminPendingBadge">1</span>
+        </button>
+        <button class="tab-link" data-tab="tab-analytics" id="navAnalytics">
+          <span class="tab-icon">📊</span> Campus Analytics & Viva Guide
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="main-content">
+
+    <!-- TAB 1: FACILITY CATALOG -->
+    <section id="tab-catalog" class="tab-pane active">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <h2 class="section-title">Campus Resources & Research Facilities</h2>
+          <p class="section-subtitle">Real-time availability, spatial specifications, and booking across all college academic blocks.</p>
+        </div>
+        <div class="catalog-filters">
+          <div class="search-input-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="catalogSearch" placeholder="Search facilities, blocks, amenities..." autocomplete="off">
+          </div>
+          <div class="filter-chips" id="categoryChips">
+            <button class="chip active" data-category="All">All Spaces</button>
+            <button class="chip" data-category="Auditorium">Auditoriums</button>
+            <button class="chip" data-category="Laboratory">Laboratories</button>
+            <button class="chip" data-category="Study Pod">Study Pods</button>
+            <button class="chip" data-category="Seminar Hall">Seminar Halls</button>
+            <button class="chip" data-category="Hardware Kit">Hardware Kits</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resource Grid -->
+      <div class="resource-grid" id="resourceGrid">
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading campus facility database...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: RESERVE & CONFLICT ENGINE -->
+    <section id="tab-booking" class="tab-pane">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <h2 class="section-title">Reserve Space & Conflict Engine</h2>
+          <p class="section-subtitle">Real-time interval overlap prevention engine: <code>(Start_A &lt; End_B ∧ End_A &gt; Start_B)</code>.</p>
+        </div>
+      </div>
+
+      <div class="booking-split-layout">
+        <!-- Booking Form -->
+        <div class="booking-form-card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Book a Space or Equipment</h3>
+              <p class="card-subtitle">Select venue, date, and schedule interval</p>
+            </div>
+            <span class="user-pill" id="bookingFormUserBadge">Alex Rivera (Student)</span>
+          </div>
+
+          <form id="reservationForm" class="styled-form">
+            <div class="form-group">
+              <label for="bookingResourceSelect" class="form-label">Select Resource *</label>
+              <select id="bookingResourceSelect" class="form-control" required>
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col-half">
+                <label for="bookingDate" class="form-label">Booking Date *</label>
+                <div class="input-with-chips">
+                  <input type="date" id="bookingDate" class="form-control" required>
+                  <div class="quick-date-chips">
+                    <button type="button" class="btn-micro" id="btnDateToday">Today</button>
+                    <button type="button" class="btn-micro" id="btnDateTomorrow">Tomorrow</button>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group col-half">
+                <label for="bookingAttendees" class="form-label">Expected Attendees *</label>
+                <input type="number" id="bookingAttendees" class="form-control" min="1" max="500" value="4" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col-half">
+                <label for="bookingStartTime" class="form-label">Start Time (24h) *</label>
+                <input type="time" id="bookingStartTime" class="form-control" value="14:00" step="900" required>
+              </div>
+              <div class="form-group col-half">
+                <label for="bookingEndTime" class="form-label">End Time (24h) *</label>
+                <input type="time" id="bookingEndTime" class="form-control" value="16:00" step="900" required>
+              </div>
+            </div>
+
+            <div class="quick-slot-bar">
+              <span class="quick-slot-label">Quick Slots:</span>
+              <button type="button" class="btn-slot-preset" data-start="09:00" data-end="11:00">09:00 - 11:00</button>
+              <button type="button" class="btn-slot-preset" data-start="11:00" data-end="13:00">11:00 - 13:00</button>
+              <button type="button" class="btn-slot-preset" data-start="14:00" data-end="16:00">14:00 - 16:00</button>
+              <button type="button" class="btn-slot-preset" data-start="16:30" data-end="18:30">16:30 - 18:30</button>
+            </div>
+
+            <div class="form-group">
+              <label for="bookingPurpose" class="form-label">Session Purpose / Academic Project Title *</label>
+              <textarea id="bookingPurpose" class="form-control" rows="3" placeholder="e.g. Capstone Project Team Review & Embedded Testing" required></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" id="btnCheckConflict" class="btn btn-secondary">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                Verify Availability
+              </button>
+              <button type="submit" id="btnSubmitBooking" class="btn btn-primary">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                Confirm & Submit Reservation
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Real-Time Conflict Diagnostic Inspector -->
+        <div class="conflict-diagnostic-card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Conflict Prevention Engine</h3>
+              <p class="card-subtitle">Real-time interval intersection verification</p>
+            </div>
+            <span class="diagnostic-indicator ready" id="diagnosticIndicator">Status: Engine Ready</span>
+          </div>
+
+          <div class="math-proof-box">
+            <div class="proof-header">Interval Overlap Detection Logic:</div>
+            <code class="math-code">Slot_A [S1, E1] ∩ Slot_B [S2, E2] ≠ ∅  ⟺  (S1 &lt; E2) ∧ (E1 &gt; S2)</code>
+            <p class="proof-subtext">Automated database query validates strict time bounds against approved and pending bookings.</p>
+          </div>
+
+          <!-- Dynamic Result Box -->
+          <div class="diagnostic-status-box" id="diagnosticStatusBox">
+            <div class="status-placeholder">
+              <div class="placeholder-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="1.8"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              </div>
+              <h4>Select a time slot and click "Verify Availability"</h4>
+              <p>Or use <strong>"Conflict Simulation"</strong> above to test double-booking prevention.</p>
+            </div>
+          </div>
+
+          <!-- Quick Test Demo Callout -->
+          <div class="demo-tip-card">
+            <div class="tip-icon">💡</div>
+            <div class="tip-text">
+              <strong>Evaluation Demonstration Reference:</strong>
+              <p>Dr. Elena Vance has reserved the <em>Grand Innovation Auditorium</em> today from <strong>10:00 to 12:00</strong>. Attempting any reservation overlapping this time window (e.g. 10:30 to 11:30) is mathematically detected and blocked instantly.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: RESERVATION PASSBOOK -->
+    <section id="tab-passbook" class="tab-pane">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <h2 class="section-title">Reservation Passbook & Access Passes</h2>
+          <p class="section-subtitle">Comprehensive registry of verified, pending, and scheduled space reservations.</p>
+        </div>
+        <div class="passbook-controls">
+          <div class="filter-chips" id="passbookStatusFilter">
+            <button class="chip active" data-status="All">All Statuses</button>
+            <button class="chip" data-status="Approved">Approved</button>
+            <button class="chip" data-status="Pending">Pending Review</button>
+            <button class="chip" data-status="Rejected">Rejected</button>
+          </div>
+          <button id="btnRefreshBookings" class="btn btn-ghost" title="Refresh Table">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      <div class="passbook-container">
+        <div class="table-responsive">
+          <table class="passbook-table" id="passbookTable">
+            <thead>
+              <tr>
+                <th>Booking Code</th>
+                <th>Facility & Location</th>
+                <th>Date & Schedule</th>
+                <th>Reserved By</th>
+                <th>Purpose & Attendees</th>
+                <th>Status</th>
+                <th>Digital Pass</th>
+              </tr>
+            </thead>
+            <tbody id="passbookTableBody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: ADMIN APPROVALS CONSOLE -->
+    <section id="tab-admin" class="tab-pane">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <h2 class="section-title">Campus Governance & Approval Console</h2>
+          <p class="section-subtitle">Administrative oversight, clearance authorization, and PIN dispatch for high-demand spaces.</p>
+        </div>
+        <div class="admin-top-actions">
+          <span class="admin-role-badge" id="adminRoleNotice">Logged in as Sarah Jenkins (Campus Manager)</span>
+        </div>
+      </div>
+
+      <div class="admin-dashboard-grid">
+        <!-- Pending Approvals Queue -->
+        <div class="admin-queue-card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Pending Facility Requests Queue</h3>
+              <p class="card-subtitle">Review and authorize venue reservations</p>
+            </div>
+            <span class="count-badge" id="adminPendingCount">1 Pending</span>
+          </div>
+          <div class="admin-queue-list" id="adminQueueList">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- Governance Guidelines & History -->
+        <div class="admin-sidebar-card">
+          <div class="card-header">
+            <h3 class="card-title">Campus Space Policy</h3>
+          </div>
+          <div class="policy-item">
+            <div class="policy-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </div>
+            <div class="policy-details">
+              <strong>Instant-Approved Spaces:</strong>
+              <p>Study Pods and small team rooms auto-approve immediately upon validation with zero staff intervention needed.</p>
+            </div>
+          </div>
+          <div class="policy-item">
+            <div class="policy-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            </div>
+            <div class="policy-details">
+              <strong>Managed High-Capacity Venues:</strong>
+              <p>Auditoriums (350 pax), Robotics Makerspaces, and Seminar Halls require administrative clearance to prevent conflicting department schedules.</p>
+            </div>
+          </div>
+          <div class="policy-item">
+            <div class="policy-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><circle cx="7.5" cy="15.5" r="5.5"></circle><path d="M11.5 11.5L21.5 1.5"></path><path d="M16 4l2 2"></path><path d="M19 7l2 2"></path></svg>
+            </div>
+            <div class="policy-details">
+              <strong>Electronic Access PIN Dispatch:</strong>
+              <p>Approving a request generates a unique 4-digit keypad PIN displayed on the student or faculty member's digital room pass.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: ANALYTICS & VIVA GUIDE -->
+    <section id="tab-analytics" class="tab-pane">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <h2 class="section-title">Smart Campus Analytics & Technical Architecture</h2>
+          <p class="section-subtitle">Space utilization metrics, energy optimization status, and technical defense documentation.</p>
+        </div>
+      </div>
+
+      <!-- Analytics Metric Cards -->
+      <div class="analytics-metrics-grid">
+        <div class="stat-card">
+          <div class="stat-icon-wrap emerald-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"></path><path d="M5 21V7l8-4v18"></path><path d="M19 21V11l-6-4"></path></svg>
+          </div>
+          <div class="stat-data">
+            <span class="stat-label">Total Facilities Registered</span>
+            <span class="stat-value" id="analyticTotalVenues">8</span>
+            <span class="stat-note">Across 3 Academic Blocks</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon-wrap green-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+          </div>
+          <div class="stat-data">
+            <span class="stat-label">Approved Reservations</span>
+            <span class="stat-value text-approved" id="analyticApprovedCount">3</span>
+            <span class="stat-note">Zero overlapping slots</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon-wrap amber-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          </div>
+          <div class="stat-data">
+            <span class="stat-label">Awaiting Staff Clearance</span>
+            <span class="stat-value text-warning" id="analyticPendingCount">1</span>
+            <span class="stat-note">High-demand auditorium requests</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon-wrap teal-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+          </div>
+          <div class="stat-data">
+            <span class="stat-label">Energy Conservation Mode</span>
+            <span class="stat-value text-teal">Active</span>
+            <span class="stat-note">HVAC & equipment auto-standby</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Technical Architecture & Defense Q&A -->
+      <div class="viva-guide-container">
+        <h3 class="viva-title">Technical Architecture & Project Defense Reference</h3>
+        <div class="viva-grid">
+          <div class="viva-card">
+            <h4>1. How does the conflict engine prevent double-booking?</h4>
+            <p>The system uses interval intersection mathematics: Two intervals <code>[S1, E1]</code> and <code>[S2, E2]</code> overlap if and only if <code>max(S1, S2) &lt; min(E1, E2)</code>. In SQL, this evaluates as:
+            <br><code>WHERE existing.start_time &lt; new_end AND existing.end_time &gt; new_start</code>.
+            Standardized 24-hour lexicographical timestamps ensure zero double-booking collisions.</p>
+          </div>
+          <div class="viva-card">
+            <h4>2. What is the role-based security hierarchy?</h4>
+            <p>The application supports 4 distinct personas:
+            <br>• <strong>Student</strong>: Quick bookings for study pods and team rooms.
+            <br>• <strong>Professor</strong>: Direct access to academic plenaries and seminar halls.
+            <br>• <strong>Lab Assistant</strong>: Hardware kit custody and testbench checkouts.
+            <br>• <strong>Campus Manager</strong>: Full administrative authority to approve/reject bookings and review occupancy logs.</p>
+          </div>
+          <div class="viva-card">
+            <h4>3. How is database concurrency handled?</h4>
+            <p>SQLite provides ACID transactions. The conflict check and booking insertion occur within database transactions to prevent race conditions during simultaneous requests.</p>
+          </div>
+          <div class="viva-card">
+            <h4>4. How does the Digital Room Pass work?</h4>
+            <p>Each confirmed booking generates a unique ticket code (e.g., <code>BKG-101</code>) and derives a reproducible 4-digit door keypad PIN from the booking ID, allowing keyless electronic smart lock access.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL 1: DAY SCHEDULE INSPECTOR -->
+  <div class="modal-backdrop" id="scheduleModal">
+    <div class="modal-box modal-lg">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title" id="scheduleModalTitle">Resource Schedule</h3>
+          <p class="modal-subtitle" id="scheduleModalSubtitle">Date: 2026-10-17</p>
+        </div>
+        <button class="btn-close-modal" id="btnCloseScheduleModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="timeline-legend">
+          <span class="legend-item"><span class="legend-dot dot-booked"></span> Reserved / Occupied</span>
+          <span class="legend-item"><span class="legend-dot dot-free"></span> Available for Booking</span>
+        </div>
+        <div class="timeline-visual" id="scheduleTimelineVisual">
+          <!-- Hourly breakdown generated via JS -->
+        </div>
+        <div class="schedule-booked-list" id="scheduleBookedList">
+          <!-- Detailed list of bookings -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="btnCloseScheduleModalFooter">Close</button>
+        <button class="btn btn-primary" id="btnBookFromSchedule">Book This Space</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: DIGITAL ROOM ACCESS PASS -->
+  <div class="modal-backdrop" id="passModal">
+    <div class="modal-box modal-pass">
+      <div class="modal-header">
+        <h3 class="modal-title">Smart Campus Access Pass</h3>
+        <button class="btn-close-modal" id="btnClosePassModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="digital-pass-ticket" id="digitalPassTicket">
+          <!-- Ticket styled content -->
+          <div class="ticket-header">
+            <div class="ticket-campus-logo">🏛️ SMART CAMPUS PASS</div>
+            <div class="ticket-status-stamp" id="ticketStatusStamp">AUTHORIZED</div>
+          </div>
+          <div class="ticket-body">
+            <div class="ticket-code-row">
+              <span class="ticket-label">BOOKING REFERENCE</span>
+              <span class="ticket-code" id="ticketBookingCode">BKG-101</span>
+            </div>
+            <div class="ticket-main-info">
+              <h4 class="ticket-room-name" id="ticketRoomName">Grand Innovation Auditorium</h4>
+              <p class="ticket-room-loc" id="ticketRoomLoc">Block A - 1st Floor</p>
+            </div>
+            <div class="ticket-grid">
+              <div class="ticket-grid-item">
+                <span class="ticket-label">DATE</span>
+                <span class="ticket-val" id="ticketDate">2026-10-17</span>
+              </div>
+              <div class="ticket-grid-item">
+                <span class="ticket-label">SCHEDULE WINDOW</span>
+                <span class="ticket-val" id="ticketTime">10:00 - 12:00</span>
+              </div>
+              <div class="ticket-grid-item">
+                <span class="ticket-label">PASS HOLDER</span>
+                <span class="ticket-val" id="ticketUser">Alex Rivera</span>
+              </div>
+              <div class="ticket-grid-item">
+                <span class="ticket-label">ROLE</span>
+                <span class="ticket-val" id="ticketRole">Student</span>
+              </div>
+            </div>
+            <div class="ticket-purpose-row">
+              <span class="ticket-label">PURPOSE / PROJECT</span>
+              <p class="ticket-purpose" id="ticketPurpose">Robotics Capstone Review</p>
+            </div>
+          </div>
+
+          <!-- Perforated separator -->
+          <div class="ticket-perforation">
+            <span class="perf-hole left"></span>
+            <span class="perf-line"></span>
+            <span class="perf-hole right"></span>
+          </div>
+
+          <div class="ticket-footer">
+            <div class="ticket-pin-box">
+              <span class="ticket-pin-label">DOOR KEYPAD PIN</span>
+              <span class="ticket-pin-digits" id="ticketPinDigits">8429</span>
+            </div>
+            <div class="ticket-barcode-sim">
+              <div class="barcode-bars"></div>
+              <span class="barcode-sub">ELECTRONIC PASS VERIFIED</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="window.print()">🖨️ Print Pass</button>
+        <button class="btn btn-primary" id="btnClosePassModalFooter">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Main JavaScript Controller -->
+  <script src="/static/js/main.js"></script>
+</body>
+</html>

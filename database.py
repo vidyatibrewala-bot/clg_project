@@ -12,8 +12,24 @@ This module handles:
 import sqlite3
 import datetime
 import os
+import shutil
 
-DB_FILE = os.path.join(os.path.dirname(__file__), "campus_booking.db")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# In serverless/read-only hosting environments (like Vercel / AWS Lambda), the code directory is read-only.
+# We copy or create the database in /tmp so SQLite write operations work seamlessly.
+if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+    TMP_DB = os.path.join("/tmp", "campus_booking.db")
+    SRC_DB = os.path.join(BASE_DIR, "campus_booking.db")
+    if not os.path.exists(TMP_DB):
+        if os.path.exists(SRC_DB):
+            try:
+                shutil.copy2(SRC_DB, TMP_DB)
+            except Exception:
+                pass
+    DB_FILE = TMP_DB
+else:
+    DB_FILE = os.path.join(BASE_DIR, "campus_booking.db")
 
 
 def get_connection():

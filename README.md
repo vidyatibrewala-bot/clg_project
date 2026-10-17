@@ -28,6 +28,16 @@ Open in browser: `http://127.0.0.1:5000`
 python app.py
 ```
 
+### 3. Cloud Deployment (Vercel)
+- Push changes to GitHub:
+  ```bash
+  git add .
+  git commit -m "Configure Vercel deployment"
+  git push origin main
+  ```
+- Import the repo into [Vercel](https://vercel.com).
+- Vercel automatically deploys the Flask app using `vercel.json`, `api/index.py`, and `requirements.txt`.
+
 ---
 
 ## 🗂️ Project Structure
@@ -35,6 +45,10 @@ python app.py
 ```
 clg project/
 │
+├── api/
+│   └── index.py        # Vercel Serverless Function entrypoint
+├── vercel.json         # Vercel routing & serverless bundle config
+├── requirements.txt    # Python dependencies for cloud hosting
 ├── app.py              # Main Tkinter Desktop Application UI & Event Controller
 ├── server.py           # Flask Web Server providing REST APIs & serving Web UI
 ├── database.py         # SQLite Database Handler & Conflict Prevention Logic
@@ -43,7 +57,8 @@ clg project/
 │   ├── css/style.css   # Executive White & Greenish Design System
 │   └── js/main.js      # Single-Page App controller & dynamic DOM logic
 ├── templates/          # HTML Templates
-│   └── index.html      # Single-Page Web Portal
+│   ├── index.html      # Single-Page Web Portal
+│   └── login.html      # Student & Faculty Dual Login Portal
 ├── assets/             # Campus facility photos & media
 └── README.md           # Documentation & Viva Explanation Guide
 ```

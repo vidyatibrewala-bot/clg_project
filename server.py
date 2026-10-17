@@ -11,10 +11,17 @@ import datetime
 from flask import Flask, render_template, request, jsonify, send_from_directory, session, redirect, url_for
 import database
 
-app = Flask(__name__, template_folder="templates", static_folder="static")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+app = Flask(
+    __name__,
+    template_folder=os.path.join(BASE_DIR, "templates"),
+    static_folder=os.path.join(BASE_DIR, "static"),
+    static_url_path="/static"
+)
 app.secret_key = os.environ.get("SECRET_KEY", "smart-campus-booking-portal-secret-key-2026")
 
-ASSETS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
+ASSETS_DIR = os.path.join(BASE_DIR, "assets")
 
 
 @app.route("/")

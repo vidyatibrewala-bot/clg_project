@@ -8,12 +8,7 @@
   ],
   "functions": {
     "api/index.py": {
-      "includeFiles": [
-        "templates/**",
-        "static/**",
-        "assets/**",
-        "campus_booking.db"
-      ]
+      "includeFiles": "{templates/**,static/**,assets/**,campus_booking.db}"
     }
   }
 }

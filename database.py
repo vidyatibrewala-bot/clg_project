@@ -61,6 +61,21 @@ def init_database():
         )
     """)
 
+    # 3. Users Table (Student and Faculty / Staff accounts)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            identifier TEXT UNIQUE NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            full_name TEXT NOT NULL,
+            role TEXT NOT NULL,
+            portal_type TEXT NOT NULL,
+            department TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+    """)
+
     # Seed initial resources if empty
     cursor.execute("SELECT COUNT(*) FROM resources")
     if cursor.fetchone()[0] == 0:
@@ -207,6 +222,24 @@ def init_database():
             INSERT INTO bookings (booking_code, resource_id, user_name, user_role, booking_date, start_time, end_time, purpose, attendees, status, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, seed_bookings)
+
+    # Seed default user accounts if empty
+    cursor.execute("SELECT COUNT(*) FROM users")
+    if cursor.fetchone()[0] == 0:
+        now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        seed_users = [
+            # Students
+            ("STU-2024-0482", "alex.rivera@campus.edu", "student123", "Alex Rivera", "Student", "student", "Computer Science & Engineering", now_str),
+            ("STU-2024-0519", "priya.sharma@campus.edu", "student123", "Priya Sharma", "Student", "student", "Electronics & Communication", now_str),
+            # Faculty & Staff
+            ("FAC-1002", "elena.vance@campus.edu", "faculty123", "Dr. Elena Vance", "Professor", "faculty", "Computer Science & AI", now_str),
+            ("FAC-1045", "marcus.chen@campus.edu", "faculty123", "Marcus Chen", "Lab Assistant", "faculty", "Robotics & Embedded Systems", now_str),
+            ("ADM-001", "sarah.jenkins@campus.edu", "admin123", "Sarah Jenkins", "Campus Manager", "faculty", "Campus Operations & Facilities", now_str),
+        ]
+        cursor.executemany("""
+            INSERT INTO users (identifier, email, password, full_name, role, portal_type, department, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, seed_users)
 
     conn.commit()
     conn.close()
@@ -441,6 +474,53 @@ def reset_database():
         except Exception:
             pass
     init_database()
+
+
+def authenticate_user(identifier_or_email, password, portal_type=None):
+    """
+    Authenticates a user by identifier (e.g. Roll No/Faculty ID) or email,
+    matching password and matching portal_type.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    query = """
+        SELECT id, identifier, email, full_name, role, portal_type, department, created_at
+        FROM users
+        WHERE (LOWER(identifier) = LOWER(?) OR LOWER(email) = LOWER(?))
+          AND password = ?
+    """
+    params = [identifier_or_email.strip(), identifier_or_email.strip(), password.strip()]
+    if portal_type and portal_type in ["student", "faculty"]:
+        query += " AND portal_type = ?"
+        params.append(portal_type)
+
+    cursor.execute(query, tuple(params))
+    user = cursor.fetchone()
+    conn.close()
+    return dict(user) if user else None
+
+
+def get_user_by_id(user_id):
+    """Fetches user details by user ID."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, identifier, email, full_name, role, portal_type, department, created_at FROM users WHERE id = ?", (user_id,))
+    user = cursor.fetchone()
+    conn.close()
+    return dict(user) if user else None
+
+
+def get_all_users(portal_type=None):
+    """Fetches list of users, optionally filtered by portal type."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    if portal_type:
+        cursor.execute("SELECT id, identifier, email, full_name, role, portal_type, department FROM users WHERE portal_type = ? ORDER BY id ASC", (portal_type,))
+    else:
+        cursor.execute("SELECT id, identifier, email, full_name, role, portal_type, department FROM users ORDER BY id ASC")
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
 
 
 # Initialize database upon import

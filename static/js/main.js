@@ -105,9 +105,68 @@ document.addEventListener("DOMContentLoaded", () => {
     bookingDate.value = getTodayStr();
 
     setupEventListeners();
+    await checkCurrentUserSession();
     await loadStats();
     await loadResources();
     await loadBookings();
+  };
+
+  // Synchronize authenticated session from /api/me
+  const checkCurrentUserSession = async () => {
+    try {
+      const res = await fetch("/api/me");
+      const data = await res.json();
+      if (data.authenticated && data.user) {
+        state.currentUser = {
+          name: data.user.name,
+          role: data.user.role,
+          identifier: data.user.identifier,
+          portal_type: data.user.portal_type,
+          department: data.user.department
+        };
+
+        bookingFormUserBadge.textContent = `${data.user.name} (${data.user.role})`;
+
+        // Sync Persona dropdown
+        const selectVal = `${data.user.name}|${data.user.role}`;
+        let matched = false;
+        for (let opt of personaSelect.options) {
+          if (opt.value.includes(data.user.name)) {
+            personaSelect.value = opt.value;
+            matched = true;
+            break;
+          }
+        }
+        if (!matched) {
+          const opt = document.createElement("option");
+          opt.value = selectVal;
+          opt.textContent = `👤 ${data.user.name} (${data.user.role})`;
+          personaSelect.appendChild(opt);
+          personaSelect.value = selectVal;
+        }
+
+        const loginBtnText = document.getElementById("headerLoginBtnText");
+        const btnHeaderLogin = document.getElementById("btnHeaderLogin");
+        if (loginBtnText && btnHeaderLogin) {
+          loginBtnText.textContent = `Sign Out (${data.user.name.split(" ")[0]})`;
+          btnHeaderLogin.title = `Signed in as ${data.user.name} (${data.user.role}). Click to sign out.`;
+          btnHeaderLogin.href = "/logout";
+        }
+
+        const notice = document.getElementById("adminRoleNotice");
+        if (notice) {
+          if (data.user.role === "Campus Manager") {
+            notice.textContent = `Logged in as ${data.user.name} (Campus Manager - Full Admin Clearance)`;
+            notice.style.color = "var(--approved-color)";
+          } else {
+            notice.textContent = `Logged in as ${data.user.name} (${data.user.role}). Switch to Campus Manager for Admin Actions.`;
+            notice.style.color = "var(--pending-color)";
+          }
+        }
+      }
+    } catch (err) {
+      console.log("No active user session detected", err);
+    }
   };
 
   // Load real-time system stats

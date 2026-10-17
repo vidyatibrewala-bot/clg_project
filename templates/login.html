@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Campus Portal | Secure Member Authentication</title>
+  <meta name="description" content="Dual authentication portal for students and faculty members to access campus resources, study pods, and space reservations.">
+
+  <!-- Professional Typography from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    /* Dedicated Dual-Portal Login Specific Styles */
+    .login-page-body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--bg-canvas);
+      background-image: 
+        radial-gradient(at 15% 15%, rgba(5, 150, 105, 0.05) 0px, transparent 45%),
+        radial-gradient(at 85% 85%, rgba(13, 148, 136, 0.04) 0px, transparent 45%);
+    }
+
+    .login-topbar {
+      padding: 16px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border-subtle);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+
+    .login-main-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px 60px;
+    }
+
+    .login-card-wrapper {
+      max-width: 1060px;
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-elevated);
+      display: grid;
+      grid-template-columns: 1fr 1.25fr;
+      overflow: hidden;
+    }
+
+    @media (max-width: 900px) {
+      .login-card-wrapper {
+        grid-template-columns: 1fr;
+        max-width: 540px;
+      }
+      .login-side-showcase {
+        display: none;
+      }
+    }
+
+    /* Left Showcase Panel */
+    .login-side-showcase {
+      background: linear-gradient(150deg, #064e3b 0%, #047857 70%, #059669 100%);
+      color: #ffffff;
+      padding: 44px 36px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-side-showcase::after {
+      content: '';
+      position: absolute;
+      bottom: -60px;
+      right: -60px;
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .showcase-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .showcase-logo-icon {
+      width: 44px;
+      height: 44px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .showcase-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1.2;
+    }
+
+    .showcase-badge {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: 0.72rem;
+      color: #d1fae5;
+      background: rgba(255, 255, 255, 0.15);
+      padding: 3px 9px;
+      border-radius: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    .showcase-features {
+      margin: 40px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .feature-point {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .feature-icon-bubble {
+      width: 34px;
+      height: 34px;
+      background: rgba(255, 255, 255, 0.16);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .feature-text strong {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 2px;
+    }
+
+    .feature-text p {
+      font-size: 0.82rem;
+      color: #d1fae5;
+      line-height: 1.45;
+    }
+
+    .showcase-footer {
+      font-size: 0.75rem;
+      color: #a7f3d0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Right Login Form Panel */
+    .login-form-panel {
+      padding: 44px 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: #ffffff;
+    }
+
+    .portal-switch-container {
+      margin-bottom: 24px;
+    }
+
+    .portal-toggle-bar {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: var(--bg-subtle);
+      padding: 5px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      gap: 4px;
+    }
+
+    .portal-toggle-btn {
+      background: transparent;
+      border: none;
+      padding: 10px 14px;
+      font-family: var(--font-main);
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: var(--transition-fast);
+    }
+
+    .portal-toggle-btn:hover {
+      color: var(--text-main);
+    }
+
+    .portal-toggle-btn.active {
+      background: #ffffff;
+      color: var(--brand-primary-hover);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .portal-header-wrap {
+      margin-bottom: 22px;
+    }
+
+    .portal-heading {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+
+    .portal-subtext {
+      font-size: 0.86rem;
+      color: var(--text-muted);
+    }
+
+    .login-form-box {
+      display: none;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .login-form-box.active {
+      display: block;
+    }
+
+    .input-field-wrap {
+      position: relative;
+    }
+
+    .input-icon-left {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .input-with-icon {
+      padding-left: 38px;
+    }
+
+    .btn-toggle-pwd {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.8rem;
+      padding: 4px;
+    }
+
+    .btn-toggle-pwd:hover {
+      color: var(--text-main);
+    }
+
+    .form-options-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      margin: 16px 0 20px;
+    }
+
+    .remember-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .forgot-link {
+      color: var(--brand-primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .forgot-link:hover {
+      text-decoration: underline;
+    }
+
+    .btn-submit-login {
+      width: 100%;
+      padding: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    /* Quick Demo Account Selector (Viva Testing) */
+    .quick-accounts-box {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px dashed var(--border-subtle);
+    }
+
+    .quick-accounts-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .quick-account-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .account-chip {
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-subtle);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition-fast);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .account-chip:hover {
+      background: var(--brand-light);
+      border-color: var(--brand-primary);
+      color: var(--brand-primary-hover);
+      transform: translateY(-1px);
+    }
+
+    .account-chip strong {
+      color: var(--text-main);
+    }
+
+    /* Alert Banner */
+    .auth-alert {
+      display: none;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      margin-bottom: 18px;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .auth-alert.error {
+      display: flex;
+      background: var(--rejected-bg);
+      border: 1px solid var(--rejected-border);
+      color: var(--rejected-color);
+    }
+
+    .auth-alert.success {
+      display: flex;
+      background: var(--approved-bg);
+      border: 1px solid var(--approved-border);
+      color: var(--approved-color);
+    }
+  </style>
+</head>
+<body class="login-page-body">
+
+  <!-- Top Application Bar -->
+  <header class="login-topbar">
+    <div class="brand-area">
+      <div class="brand-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 21h18"></path>
+          <path d="M5 21V7l8-4v18"></path>
+          <path d="M19 21V11l-6-4"></path>
+          <path d="M9 9h1"></path>
+          <path d="M9 13h1"></path>
+          <path d="M9 17h1"></path>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1 class="brand-title">Smart Campus <span class="accent-text">Resource Booking</span></h1>
+        <div class="brand-badges">
+          <span class="pulse-indicator"><span class="dot"></span> Institutional SSO Ready</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <a href="/" class="btn btn-ghost" title="Enter campus portal directly without logging in">
+        Browse as Guest &rarr;
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Center Card Container -->
+  <main class="login-main-container">
+    <div class="login-card-wrapper">
+      
+      <!-- Left: Campus Showcase & Guarantees -->
+      <section class="login-side-showcase">
+        <div>
+          <div class="showcase-brand">
+            <div class="showcase-logo-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                <path d="M2 17l10 5 10-5"></path>
+                <path d="M2 12l10 5 10-5"></path>
+              </svg>
+            </div>
+            <div>
+              <h2 class="showcase-title">Campus Operations</h2>
+              <span class="showcase-badge">Academic Session 2026-27</span>
+            </div>
+          </div>
+
+          <div class="showcase-features">
+            <div class="feature-point">
+              <div class="feature-icon-bubble">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
+              </div>
+              <div class="feature-text">
+                <strong>8+ Academic Venues & Pods</strong>
+                <p>Auditoriums, robotics labs, acoustic study pods, and seminar facilities across campus blocks.</p>
+              </div>
+            </div>
+
+            <div class="feature-point">
+              <div class="feature-icon-bubble">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polyline></svg>
+              </div>
+              <div class="feature-text">
+                <strong>Interval Conflict Prevention</strong>
+                <p>Mathematical collision blocker stops overlapping bookings in real time.</p>
+              </div>
+            </div>
+
+            <div class="feature-point">
+              <div class="feature-icon-bubble">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              </div>
+              <div class="feature-text">
+                <strong>Digital Passes & Door Keypad PINs</strong>
+                <p>Verified bookings generate 4-digit door lock access codes instantly.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="showcase-footer">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          <span>University Identity Verification & Access Control</span>
+        </div>
+      </section>
+
+      <!-- Right: Dual-Portal Login Card -->
+      <section class="login-form-panel">
+        
+        <!-- Portal Selector Switcher -->
+        <div class="portal-switch-container">
+          <div class="portal-toggle-bar">
+            <button type="button" class="portal-toggle-btn active" id="tabBtnStudent" data-portal="student">
+              <span>🎓</span> Student Portal
+            </button>
+            <button type="button" class="portal-toggle-btn" id="tabBtnFaculty" data-portal="faculty">
+              <span>🛡️</span> Faculty & Staff
+            </button>
+          </div>
+        </div>
+
+        <!-- Alert Notification Box -->
+        <div class="auth-alert" id="authAlertBox">
+          <span class="alert-icon">⚠️</span>
+          <span class="alert-msg" id="authAlertMsg">Invalid credentials</span>
+        </div>
+
+        <!-- ==================================================================== -->
+        <!-- FORM 1: STUDENT LOGIN -->
+        <!-- ==================================================================== -->
+        <div class="login-form-box active" id="formBoxStudent">
+          <div class="portal-header-wrap">
+            <h2 class="portal-heading">Student Portal Sign In</h2>
+            <p class="portal-subtext">Book study pods, robotics makerspaces, and download room passes.</p>
+          </div>
+
+          <form id="studentLoginForm">
+            <div class="form-group">
+              <label for="studentIdentifier" class="form-label">Student ID or Campus Email *</label>
+              <div class="input-field-wrap">
+                <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <input type="text" id="studentIdentifier" class="form-control input-with-icon" placeholder="e.g. STU-2024-0482 or alex.rivera@campus.edu" required autocomplete="username">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="studentPassword" class="form-label">Password *</label>
+              <div class="input-field-wrap">
+                <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <input type="password" id="studentPassword" class="form-control input-with-icon" placeholder="••••••••" required autocomplete="current-password">
+                <button type="button" class="btn-toggle-pwd" data-target="studentPassword">Show</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="studentDepartment" class="form-label">Department</label>
+              <select id="studentDepartment" class="form-control">
+                <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+                <option value="Electronics & Communication">Electronics & Communication</option>
+                <option value="Mechanical & Mechatronics">Mechanical & Mechatronics</option>
+                <option value="Electrical Engineering">Electrical Engineering</option>
+              </select>
+            </div>
+
+            <div class="form-options-row">
+              <label class="remember-label">
+                <input type="checkbox" id="studentRemember" checked>
+                <span>Remember me</span>
+              </label>
+              <a href="#" class="forgot-link" onclick="alert('Demo Mode: Use quick demo sign-in accounts below or password \'student123\''); return false;">Need Help?</a>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-submit-login" id="btnSubmitStudent">
+              Sign In as Student &rarr;
+            </button>
+          </form>
+
+          <!-- 1-Click Quick Demo Sign-in for Evaluators -->
+          <div class="quick-accounts-box">
+            <div class="quick-accounts-label">
+              <span>⚡</span> Fast Demo Sign-In (Viva Evaluators):
+            </div>
+            <div class="quick-account-chips">
+              <button type="button" class="account-chip" data-portal="student" data-id="STU-2024-0482" data-pass="student123">
+                👤 <strong>Alex Rivera</strong> (CS Student)
+              </button>
+              <button type="button" class="account-chip" data-portal="student" data-id="STU-2024-0519" data-pass="student123">
+                👤 <strong>Priya Sharma</strong> (EC Student)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================================================================== -->
+        <!-- FORM 2: FACULTY & STAFF LOGIN -->
+        <!-- ==================================================================== -->
+        <div class="login-form-box" id="formBoxFaculty">
+          <div class="portal-header-wrap">
+            <h2 class="portal-heading">Faculty & Staff Portal</h2>
+            <p class="portal-subtext">Manage auditorium schedules, hardware kit checkout, and approvals.</p>
+          </div>
+
+          <form id="facultyLoginForm">
+            <div class="form-group">
+              <label for="facultyIdentifier" class="form-label">Faculty / Staff ID or Email *</label>
+              <div class="input-field-wrap">
+                <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                <input type="text" id="facultyIdentifier" class="form-control input-with-icon" placeholder="e.g. FAC-1002 or elena.vance@campus.edu" required autocomplete="username">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="facultyPassword" class="form-label">Security Password *</label>
+              <div class="input-field-wrap">
+                <svg class="input-icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <input type="password" id="facultyPassword" class="form-control input-with-icon" placeholder="••••••••" required autocomplete="current-password">
+                <button type="button" class="btn-toggle-pwd" data-target="facultyPassword">Show</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="facultyDesignation" class="form-label">Role Designation</label>
+              <select id="facultyDesignation" class="form-control">
+                <option value="Professor">🎓 Professor / Department Head</option>
+                <option value="Lab Assistant">🔬 Lab Assistant / Equipment Custodian</option>
+                <option value="Campus Manager">🛡️ Campus Manager (Administrator Clearance)</option>
+              </select>
+            </div>
+
+            <div class="form-options-row">
+              <label class="remember-label">
+                <input type="checkbox" id="facultyRemember" checked>
+                <span>Institutional device</span>
+              </label>
+              <a href="#" class="forgot-link" onclick="alert('Demo Mode: Click quick demo accounts below or password \'faculty123\' / \'admin123\''); return false;">Support</a>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-submit-login" id="btnSubmitFaculty">
+              Sign In as Faculty / Staff &rarr;
+            </button>
+          </form>
+
+          <!-- 1-Click Quick Demo Sign-in for Evaluators -->
+          <div class="quick-accounts-box">
+            <div class="quick-accounts-label">
+              <span>⚡</span> Fast Demo Sign-In (Viva Evaluators):
+            </div>
+            <div class="quick-account-chips">
+              <button type="button" class="account-chip" data-portal="faculty" data-id="FAC-1002" data-pass="faculty123">
+                🎓 <strong>Dr. Elena Vance</strong> (Professor)
+              </button>
+              <button type="button" class="account-chip" data-portal="faculty" data-id="FAC-1045" data-pass="faculty123">
+                🔬 <strong>Marcus Chen</strong> (Lab Assistant)
+              </button>
+              <button type="button" class="account-chip" data-portal="faculty" data-id="ADM-001" data-pass="admin123">
+                🛡️ <strong>Sarah Jenkins</strong> (Campus Manager)
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const tabBtnStudent = document.getElementById("tabBtnStudent");
+      const tabBtnFaculty = document.getElementById("tabBtnFaculty");
+      const formBoxStudent = document.getElementById("formBoxStudent");
+      const formBoxFaculty = document.getElementById("formBoxFaculty");
+      const authAlertBox = document.getElementById("authAlertBox");
+      const authAlertMsg = document.getElementById("authAlertMsg");
+
+      // Check URL query param for default portal e.g. /login?portal=faculty
+      const urlParams = new URLSearchParams(window.location.search);
+      const initialPortal = urlParams.get("portal") || "{{ initial_portal|default('student') }}";
+
+      const switchPortal = (portal) => {
+        hideAlert();
+        if (portal === "faculty") {
+          tabBtnStudent.classList.remove("active");
+          tabBtnFaculty.classList.add("active");
+          formBoxStudent.classList.remove("active");
+          formBoxFaculty.classList.add("active");
+        } else {
+          tabBtnFaculty.classList.remove("active");
+          tabBtnStudent.classList.add("active");
+          formBoxFaculty.classList.remove("active");
+          formBoxStudent.classList.add("active");
+        }
+      };
+
+      if (initialPortal === "faculty") {
+        switchPortal("faculty");
+      }
+
+      tabBtnStudent.addEventListener("click", () => switchPortal("student"));
+      tabBtnFaculty.addEventListener("click", () => switchPortal("faculty"));
+
+      // Toggle Password Visibility
+      document.querySelectorAll(".btn-toggle-pwd").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const targetId = btn.dataset.target;
+          const input = document.getElementById(targetId);
+          if (input.type === "password") {
+            input.type = "text";
+            btn.textContent = "Hide";
+          } else {
+            input.type = "password";
+            btn.textContent = "Show";
+          }
+        });
+      });
+
+      const showAlert = (msg, type = "error") => {
+        authAlertBox.className = `auth-alert ${type}`;
+        authAlertMsg.textContent = msg;
+      };
+
+      const hideAlert = () => {
+        authAlertBox.className = "auth-alert";
+      };
+
+      // Perform Login Request
+      const executeLogin = async (identifier, password, portalType) => {
+        hideAlert();
+        try {
+          const res = await fetch("/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              identifier: identifier,
+              password: password,
+              portal_type: portalType
+            })
+          });
+
+          const data = await res.json();
+
+          if (res.ok && data.success) {
+            showAlert(data.message, "success");
+            // Store active user in localStorage as well for frontend sync
+            localStorage.setItem("campus_active_user", JSON.stringify(data.user));
+            setTimeout(() => {
+              window.location.href = "/";
+            }, 600);
+          } else {
+            showAlert(data.message || "Authentication failed.");
+          }
+        } catch (err) {
+          showAlert("Connection error. Ensure local server is running.");
+        }
+      };
+
+      // Student Form Submit
+      document.getElementById("studentLoginForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const id = document.getElementById("studentIdentifier").value.trim();
+        const pwd = document.getElementById("studentPassword").value.trim();
+        executeLogin(id, pwd, "student");
+      });
+
+      // Faculty Form Submit
+      document.getElementById("facultyLoginForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const id = document.getElementById("facultyIdentifier").value.trim();
+        const pwd = document.getElementById("facultyPassword").value.trim();
+        executeLogin(id, pwd, "faculty");
+      });
+
+      // 1-Click Fast Demo Account Chips
+      document.querySelectorAll(".account-chip").forEach((chip) => {
+        chip.addEventListener("click", () => {
+          const portal = chip.dataset.portal;
+          const id = chip.dataset.id;
+          const pass = chip.dataset.pass;
+
+          if (portal === "student") {
+            document.getElementById("studentIdentifier").value = id;
+            document.getElementById("studentPassword").value = pass;
+            executeLogin(id, pass, "student");
+          } else {
+            document.getElementById("facultyIdentifier").value = id;
+            document.getElementById("facultyPassword").value = pass;
+            executeLogin(id, pass, "faculty");
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

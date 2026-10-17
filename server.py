@@ -8,10 +8,11 @@ Runs on http://localhost:5000 / http://127.0.0.1:5000
 
 import os
 import datetime
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_from_directory, session, redirect, url_for
 import database
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
+app.secret_key = os.environ.get("SECRET_KEY", "smart-campus-booking-portal-secret-key-2026")
 
 ASSETS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 
@@ -19,13 +20,97 @@ ASSETS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 @app.route("/")
 def index():
     """Serves the main single-page web application."""
-    return render_template("index.html")
+    user = session.get("user")
+    return render_template("index.html", user=user)
 
 
-@app.route("/assets/<path:filename>")
-def serve_assets(filename):
-    """Directly serves images and media assets from the assets directory."""
-    return send_from_directory(ASSETS_DIR, filename)
+@app.route("/login")
+def login_page():
+    """Serves the dedicated dual-portal login page for Students and Faculty."""
+    portal = request.args.get("portal", "student")
+    return render_template("login.html", initial_portal=portal)
+
+
+@app.route("/logout")
+def logout_redirect():
+    """Logs out and redirects to login portal."""
+    session.clear()
+    return redirect(url_for("login_page"))
+
+
+# ==============================================================================
+# AUTHENTICATION API ENDPOINTS
+# ==============================================================================
+
+@app.route("/api/login", methods=["POST"])
+def api_login():
+    """Authenticates student or faculty member and establishes session."""
+    try:
+        data = request.json or {}
+        identifier = data.get("identifier", "").strip()
+        password = data.get("password", "").strip()
+        portal_type = data.get("portal_type", "student").strip().lower()
+
+        if not identifier or not password:
+            return jsonify({
+                "success": False,
+                "message": "Please enter both institutional ID/email and password."
+            }), 400
+
+        user = database.authenticate_user(identifier, password, portal_type)
+        if not user:
+            portal_label = "Student" if portal_type == "student" else "Faculty & Staff"
+            return jsonify({
+                "success": False,
+                "message": f"Invalid credentials for {portal_label} Portal. Check your ID and password or click a quick-demo account below."
+            }), 401
+
+        # Store in session
+        session["user"] = {
+            "id": user["id"],
+            "identifier": user["identifier"],
+            "email": user["email"],
+            "name": user["full_name"],
+            "role": user["role"],
+            "portal_type": user["portal_type"],
+            "department": user["department"]
+        }
+
+        return jsonify({
+            "success": True,
+            "message": f"Welcome back, {user['full_name']}!",
+            "user": session["user"]
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+@app.route("/api/logout", methods=["POST"])
+def api_logout():
+    """Clears user session."""
+    session.clear()
+    return jsonify({"success": True, "message": "Signed out successfully."})
+
+
+@app.route("/api/me", methods=["GET"])
+def api_me():
+    """Returns the current authenticated user session."""
+    user = session.get("user")
+    if user:
+        return jsonify({"authenticated": True, "user": user})
+    return jsonify({"authenticated": False, "user": None})
+
+
+@app.route("/api/demo-users", methods=["GET"])
+def api_demo_users():
+    """Provides pre-seeded sample accounts for fast demonstration."""
+    try:
+        portal = request.args.get("portal")
+        users = database.get_all_users(portal)
+        return jsonify(users)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # ==============================================================================

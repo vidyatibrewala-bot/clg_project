@@ -29,8 +29,27 @@ ASSETS_DIR = os.path.join(BASE_DIR, "assets")
 @app.route("/api/index.py")
 def index():
     """Serves the main single-page web application."""
+    if request.args.get("debug") == "1":
+        return jsonify({
+            "url": request.url,
+            "path": request.path,
+            "environ_path_info": request.environ.get("PATH_INFO"),
+            "headers": dict(request.headers),
+        })
     user = session.get("user")
     return render_template("index.html", user=user)
+
+
+@app.route("/api/debug-route")
+def debug_route():
+    """Inspects WSGI environ on Vercel."""
+    return jsonify({
+        "PATH_INFO": request.environ.get("PATH_INFO"),
+        "QUERY_STRING": request.environ.get("QUERY_STRING"),
+        "X_MATCHED_PATH": request.headers.get("X-Matched-Path"),
+        "X_VERCEL_PATH": request.headers.get("X-Vercel-Path"),
+        "X_FORWARDED_URI": request.headers.get("X-Forwarded-Uri"),
+    })
 
 
 @app.route("/login")

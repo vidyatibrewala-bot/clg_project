@@ -25,6 +25,8 @@ ASSETS_DIR = os.path.join(BASE_DIR, "assets")
 
 
 @app.route("/")
+@app.route("/api/index")
+@app.route("/api/index.py")
 def index():
     """Serves the main single-page web application."""
     user = session.get("user")
